@@ -1,47 +1,63 @@
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import com.google.common.collect.Lists;
 
 public class CircuitRouter extends Router {
 
 	private List<Channel> channels;
-	
-	public CircuitRouter(Router next, int bandwidth, int latency, int concurCoef) {
-		super(next, bandwidth, latency, concurCoef);
+	private Queue<Channel> queuedChannels;
+
+	public CircuitRouter(String name, Router next, int bandwidth, int latency,
+			int concurCoef) {
+		super(name, next, bandwidth, latency, concurCoef);
 		channels = new LinkedList<Channel>();
+		queuedChannels = Lists.newLinkedList();
 	}
 
 	@Override
 	public void update(int time) {
-		Iterator<Channel> it = channels.iterator();
+		final AtomicInteger releasedBandwith = new AtomicInteger(0);
+		channels = channels.stream().filter(c -> {
+			if (c.ttl <= 0) {
+				releasedBandwith.addAndGet(c.channelSize);
+				StatisticsModule.getInstance().logCompletedRequest(c.source);
+			}
+			return c.ttl > 0;
+		}).collect(Collectors.toList());
 		
-		while (it.hasNext()) {
-			Channel chn = it.next();
-			if (chn.ttl <= 0)
-				it.remove();				
+		int bandwith = releasedBandwith.get();
+		while (bandwith > 0 && !queuedChannels.isEmpty()) {
+			Channel polled = queuedChannels.poll();
+			if (polled != null && polled.channelSize <= bandwith) {
+				this.setUpChannel(polled, time);
+				bandwith -= polled.channelSize;
+			}
 		}
-		
 	}
-	
-	public boolean setUpChannel(Channel chn, int time) {
+
+	public void setUpChannel(Channel chn, int time) {
+		if (chn == null)
+			return;
 		int sum = chn.channelSize;
-		for (Channel each :channels)
+		for (Channel each : channels)
 			sum += each.channelSize;
-		
+
 		if (bandwidth >= sum) {
 			if (next != null) {
-				if (((CircuitRouter)next).setUpChannel(chn, time)) {
-					channels.add(chn);
-				} else {
-					StatisticsModule.getInstance().logLostReq(time, chn.source, chn.reqSize);
-					return false;
-				}
-			} else { 
-				channels.add(chn);
+				((CircuitRouter) next).setUpChannel(chn, time);
 			}
-			return true;
+			channels.add(chn);
 		} else {
-			return false;
+			StatisticsModule.getInstance().logExceededBandwithRequest(
+					chn.source);
+			if (!this.queuedChannels.offer(chn)) {
+				StatisticsModule.getInstance()
+						.logLostReq(time, chn.source, sum);
+			}
 		}
 	}
 
