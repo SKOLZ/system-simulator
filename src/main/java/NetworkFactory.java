@@ -21,16 +21,16 @@ public class NetworkFactory {
 
 	public Network createCircuitDomiciliaryNetwork() {
 		Router fourthRouter = new CircuitRouter("Fourth", null, 100, 10, 10);
-		Router thirdRouter = new CircuitRouter("Third", fourthRouter, 100, 10,
-				10);
-		Router secondRouter = new CircuitRouter("Second", thirdRouter, 100, 10,
-				10);
-		Router firstRouter = new CircuitRouter("First", secondRouter, 100, 10,
-				10);
+//		Router thirdRouter = new CircuitRouter("Third", fourthRouter, 100, 10,
+//				10);
+//		Router secondRouter = new CircuitRouter("Second", thirdRouter, 100, 10,
+//				10);
+//		Router firstRouter = new CircuitRouter("First", secondRouter, 100, 10,
+//				10);
 
 		List<AppProfile> appProfiles = Lists.newLinkedList();
 
-		Device device1 = new Device("joti device 1", appProfiles, firstRouter);
+		Device device1 = new Device("joti device 1", appProfiles, fourthRouter);
 		// Device device2 = new Device("joti device 2", appProfiles,
 		// firstRouter);
 		// Device device3 = new Device("joti device 3", appProfiles,
@@ -44,7 +44,7 @@ public class NetworkFactory {
 		appProfiles.addAll(Arrays.asList(profile1, profile2, profile3));
 
 		List<Device> devices = Lists.newArrayList(device1);
-		List<Router> routers = Lists.newArrayList(firstRouter);
+		List<Router> routers = Lists.newArrayList(fourthRouter);
 		return new Network(devices, routers, 0);
 	}
 

@@ -14,6 +14,7 @@ public class AppProfile {
 		double prob = reqFreq.getValue(time);
 
 		if (Math.random() < prob) {
+			StatisticsModule.getInstance().logAttemptedRequest(device);
 			device.sendRequest((int) Math.ceil(reqSize.getValue(time)));
 		}
 	}

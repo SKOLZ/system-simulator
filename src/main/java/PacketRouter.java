@@ -31,11 +31,11 @@ public class PacketRouter extends Router {
 			pdp.delay--;
 
 			if (pdp.delay <= 0) {
-				if (packetsQueue.size() < concurCoef)
-					packetsQueue.add(pdp.packet);
-				else
-					StatisticsModule.getInstance().logLostReq(time,
-							pdp.packet.source, pdp.packet.size);
+//				if (packetsQueue.size() < concurCoef)
+//					packetsQueue.add(pdp.packet);
+//				else
+//					StatisticsModule.getInstance().logLostReq(time,
+//							pdp.packet.source, pdp.packet.size);
 				it.remove();
 			}
 		}
@@ -46,17 +46,17 @@ public class PacketRouter extends Router {
 		if (current != null) {
 			transmittedBytes += super.bandwidth;
 			if (transmittedBytes >= current.size) {
-				if (next == null)
-					StatisticsModule.getInstance().logReceivedReq(
-							time + latency, current.source,
-							current.received(time + latency), current.size);
-				else
+//				if (next == null)
+//					StatisticsModule.getInstance().logReceivedReq(
+//							time + latency, current.source,
+//							current.received(time + latency), current.size);
+//				else
 					forwardCurPacket();
 			}
 		} else if (!packetsQueue.isEmpty()) {
 			current = packetsQueue.poll();
 		} else {
-			StatisticsModule.getInstance().logIdleRouter(time, this);
+//			StatisticsModule.getInstance().logIdleRouter(time, this);
 		}
 	}
 
