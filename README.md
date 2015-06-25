@@ -14,7 +14,7 @@ Aclaración: Esto debe hacerse solamente si se hacen cambios al código fuente, 
 
 Forma de uso:
 
-	Ejecutar en línea de comandos: java -jar target/SS.jar [OPTS]
+	Ejecutar en línea de comandos: java -jar SS.jar [OPTS]
 	Donde OPTS puede ser:
 		-p				Indica que se utilizará Packet Switching
 		-c				Indica que se utilizará Circuit Switching
