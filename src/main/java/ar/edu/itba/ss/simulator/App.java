@@ -8,11 +8,17 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import ar.edu.itba.ss.simulator.model.Network;
 
 public class App extends Application {
 
 	public static void main(String[] args) throws InterruptedException {
-		Application.launch(args);
+		int simulationDelay = 10;
+		int maxTime = 1000;
+		double lambda = 0.05;
+
+		new Network().run(simulationDelay, maxTime, lambda);
+		// Application.launch(args);
 	}
 
 	@Override
@@ -53,7 +59,7 @@ public class App extends Application {
 		router3iv.setPreserveRatio(true);
 		router3iv.setFitHeight(150);
 		router3iv.setFitWidth(150);
-		
+
 		ImageView receiveriv = new ImageView();
 		receiveriv.setImage(new Image("user.jpg", 500, 500, false, false));
 		receiveriv.setPreserveRatio(true);

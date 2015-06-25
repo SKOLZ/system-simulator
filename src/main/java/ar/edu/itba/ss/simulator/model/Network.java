@@ -12,11 +12,7 @@ import com.google.common.collect.Lists;
 
 public class Network extends TimedObject {
 
-	public void run() throws InterruptedException {
-		int simulationDelay = 10;
-		int maxTime = 1000;
-		double lambda = 0.05;
-
+	public void run(int simulationDelay, int maxTime, double lambda) throws InterruptedException {
 		List<TimedObject> timedObjects = Lists.newLinkedList();
 
 		User receiver = new User(null, new ExponentialDistribution(0.5));
