@@ -1,22 +1,28 @@
 package ar.edu.itba.ss.simulator;
 
+import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javafx.animation.Animation;
+import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.animation.Transition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -109,29 +115,11 @@ public class App extends Application {
 
 	@Override
 	public void start(Stage stage) throws Exception {
-		HBox upper = new HBox();
-		upper.getChildren().addAll(networkUsageChart(), byterateChart());
-		HBox lower = new HBox();
-		lower.getChildren().addAll(desvestChart(), latencyChart());
+		GifAnimation ani = new AnimatedGif(getClass().getResource(
+				"/das giffen swai.gif").toExternalForm(), 1000, 500);
+		ani.setCycleCount(10000);
 
-		VBox root = new VBox(upper, lower);
-
-		ImageView gifView = new ImageView();
-		gifView.setImage(new Image("das giffen swai.gif"));
-		gifView.setFitWidth(500);
-		gifView.setPreserveRatio(true);
-		gifView.setSmooth(true);
-		gifView.setCache(true);
-
-		HBox group = new HBox(root, new VBox(gifView, new VBox(
-				networkUsage(networkUsageProp), latency(latencyProp),
-				byteRate(byterateProp), desvestLatency(desvestLatencyProp))));
-
-		stage.setScene(new Scene(group));
-		stage.show();
-		this.animations.forEach(a -> a.play());
-
-		new Thread(() -> {
+		Thread thread = new Thread(() -> {
 			for (int i = 0; i < maxTime.get(); i++) {
 				timedObjects.forEach(to -> to.tick());
 				Statistics.tick();
@@ -151,7 +139,46 @@ public class App extends Application {
 				}
 			}
 
-		}).start();
+			ani.stop();
+			this.animations.forEach(a -> a.stop());
+		});
+
+		HBox upper = new HBox();
+		upper.getChildren().addAll(networkUsageChart(), byterateChart());
+		HBox lower = new HBox();
+		lower.getChildren().addAll(desvestChart(), latencyChart());
+
+		VBox root = new VBox(upper, lower);
+
+		HBox ctn = new HBox();
+
+		ctn.getChildren().addAll(ani.getView());
+
+		HBox btnCtn = new HBox();
+		Button btPause = new Button("Stop");
+		btPause.setOnAction(e -> {
+			ani.stop();
+			this.animations.forEach(a -> a.stop());
+			thread.stop();
+			btPause.setDisable(true);
+		});
+
+		Button btResume = new Button("Start");
+		btResume.setOnAction(e -> {
+			ani.play();
+			this.animations.forEach(a -> a.play());
+			thread.start();
+			btResume.setDisable(true);
+		});
+		btnCtn.getChildren().addAll(btResume, btPause);
+
+		HBox group = new HBox(root, new VBox(ctn, new VBox(
+				networkUsage(networkUsageProp), latency(latencyProp),
+				byteRate(byterateProp), desvestLatency(desvestLatencyProp)),
+				btnCtn));
+
+		stage.setScene(new Scene(group));
+		stage.show();
 	}
 
 	private Pane byteRate(SimpleStringProperty property) {
@@ -380,6 +407,72 @@ public class App extends Application {
 		animation.setCycleCount(Animation.INDEFINITE);
 		this.animations.add(animation);
 		return lc;
+	}
+
+	public class AnimatedGif extends GifAnimation {
+
+		public AnimatedGif(String filename, double durationMs, int scale) {
+
+			GifDecoder d = new GifDecoder();
+			d.read(filename);
+
+			Image[] sequence = new Image[d.getFrameCount()];
+			for (int i = 0; i < d.getFrameCount(); i++) {
+
+				WritableImage wimg = null;
+				BufferedImage bimg = d.getFrame(i);
+				sequence[i] = SwingFXUtils.toFXImage(bimg, wimg);
+
+			}
+
+			super.init(sequence, durationMs, scale);
+		}
+
+	}
+
+	public class GifAnimation extends Transition {
+
+		private ImageView imageView;
+		private int count;
+
+		private int lastIndex;
+
+		private Image[] sequence;
+
+		private GifAnimation() {
+		}
+
+		public GifAnimation(Image[] sequence, double durationMs, int scale) {
+			init(sequence, durationMs, scale);
+		}
+
+		private void init(Image[] sequence, double durationMs, int scale) {
+			this.imageView = new ImageView(sequence[0]);
+			this.imageView.setFitWidth(scale);
+			this.imageView.setFitHeight(scale);
+			this.sequence = sequence;
+			this.count = sequence.length;
+
+			setCycleCount(1);
+			setCycleDuration(Duration.millis(durationMs));
+			setInterpolator(Interpolator.LINEAR);
+
+		}
+
+		protected void interpolate(double k) {
+
+			final int index = Math.min((int) Math.floor(k * count), count - 1);
+			if (index != lastIndex) {
+				imageView.setImage(sequence[index]);
+				lastIndex = index;
+			}
+
+		}
+
+		public ImageView getView() {
+			return imageView;
+		}
+
 	}
 
 }
