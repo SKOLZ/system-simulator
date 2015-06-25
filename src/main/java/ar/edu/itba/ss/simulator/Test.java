@@ -134,5 +134,5 @@ public class Test extends Application {
         primaryStage.show();
         play();
     }
-//    public static void main(String[] args) { launch(args); }
+    public static void main(String[] args) { launch(args); }
 }
