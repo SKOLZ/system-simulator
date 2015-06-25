@@ -27,7 +27,6 @@ public class User extends Device {
 	@Override
 	public void receive(Data data) {
 		this.receivedData.add(data);
-		super.tick();
 	}
 
 	@Override
@@ -37,6 +36,8 @@ public class User extends Device {
 			while (!receivedData.isEmpty()) {
 				Data received = receivedData.remove();
 				received.transferred();
+				if (received.getMessage().isTransferred())
+					super.tick();
 				Statistics.logReceived(received, this.getTime());
 			}
 		} else {

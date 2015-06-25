@@ -2,6 +2,7 @@ package ar.edu.itba.ss.simulator;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import ar.edu.itba.ss.simulator.model.Data;
 import ar.edu.itba.ss.simulator.model.Message;

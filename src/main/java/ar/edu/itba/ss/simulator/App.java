@@ -47,7 +47,6 @@ public class App extends Application {
 			String.valueOf(Statistics.getAverageLatency()));
 	private SimpleStringProperty byterateProp = new SimpleStringProperty(
 			String.valueOf(Statistics.getByterate()));
-
 	private SimpleStringProperty desvestLatencyProp = new SimpleStringProperty(
 			String.valueOf(Statistics.getDesvestLatency()));
 
@@ -67,6 +66,7 @@ public class App extends Application {
 		options.addOption("b", true, "routers bandwitdh");
 		options.addOption("tr", true, "routers transfer rate");
 		options.addOption("u", true, "users");
+		options.addOption("r", true, "routers");
 		options.addOption("t", true, "time");
 		options.addOption("k", true, "channels");
 
@@ -84,6 +84,9 @@ public class App extends Application {
 		}
 		if (cmd.hasOption("u")) {
 			users = Integer.valueOf(cmd.getOptionValue("u"));
+		}
+		if (cmd.hasOption("r")) {
+			routers = Integer.valueOf(cmd.getOptionValue("r"));
 		}
 		if (cmd.hasOption("t")) {
 			maxTime.set(Integer.valueOf(cmd.getOptionValue("t")));
@@ -267,6 +270,10 @@ public class App extends Application {
 											- previousTime);
 									previousTime += Statistics.getTime()
 											- previousTime;
+								}
+								if (Statistics.getByterate() > 100) {
+									yAxis.setUpperBound(Statistics
+											.getByterate() + 100);
 								}
 								byterateSeries.getData().add(
 										new XYChart.Data<Number, Number>(

@@ -36,10 +36,6 @@ public class PacketChannel extends Channel {
 
 	@Override
 	public boolean transfer(Data data) {
-		if (Math.random() > 0.5 || true) {
-			endpoint.receive(data);
-			return true;
-		}
 		SubChannel channel = channels
 				.stream()
 				.filter(c -> c.id != null
