@@ -36,22 +36,26 @@ public class PacketChannel extends Channel {
 
 	@Override
 	public boolean transfer(Data data) {
-		SubChannel channel = channels
-				.stream()
-				.filter(c -> c.id != null
-						&& c.id.equals(data.getMessage().getId())).findFirst()
-				.orElse(null);
-		if (channel != null) {
-			channel.addData(data);
-		} else if (isAvailable()) {
-			SubChannel newChannel = channels.stream()
-					.filter(c -> c.isAvailable()).findFirst().orElse(null);
-			if (newChannel == null)
-				return false;
-			newChannel.takeChannel(data.getMessage().getId());
-			newChannel.addData(data);
+		if (Math.random() > 0.7) {
+			endpoint.receive(data);
 			return true;
 		}
+//		SubChannel channel = channels
+//				.stream()
+//				.filter(c -> c.id != null
+//						&& c.id.equals(data.getMessage().getId())).findFirst()
+//				.orElse(null);
+//		if (channel != null) {
+//			channel.addData(data);
+//		} else if (isAvailable()) {
+//			SubChannel newChannel = channels.stream()
+//					.filter(c -> c.isAvailable()).findFirst().orElse(null);
+//			if (newChannel == null)
+//				return false;
+//			newChannel.takeChannel(data.getMessage().getId());
+//			newChannel.addData(data);
+//			return true;
+//		}
 		return false;
 	}
 

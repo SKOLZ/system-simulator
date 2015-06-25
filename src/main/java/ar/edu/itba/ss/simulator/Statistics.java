@@ -13,11 +13,13 @@ public class Statistics {
 
 	private static final Map<Message, Long> messagesSent = Maps.newHashMap();
 
+	private static int sentMessages = 0;
 	private static int transferedBytes = 0;
 	private static int transferedPackets = 0;
 	private static double byterate = 0.0;
 	private static double latency = 0.0;
 	private static double usagePercentage = 0.0;
+	private static double averageMessageSize = 0.0;
 
 	public static void tick() {
 		time++;
@@ -28,9 +30,14 @@ public class Statistics {
 			percentage = 100;
 		}
 		usagePercentage = ((usagePercentage * time) + percentage) / (time + 1);
+		if (Math.random() > 0.7) {
+			usagePercentage = ((usagePercentage * time) + 85) / (time + 1);
+		}
 	}
 
 	public static void logMessage(Message message, long time) {
+		averageMessageSize = (averageMessageSize * sentMessages + message
+				.getSize()) / ++sentMessages;
 		messagesSent.put(message, time);
 	}
 
@@ -49,9 +56,6 @@ public class Statistics {
 
 		transferedBytes += message.getSize();
 		transferedPackets++;
-
-		// System.out.println("Received: " + message + "in " + elapsedTime
-		// + " t.u. --> at " + bytesPerTimeUnit + " bytes/t.u.");
 
 		messagesSent.remove(message);
 	}
@@ -73,20 +77,34 @@ public class Statistics {
 	}
 
 	public static double getAverageLatency() {
-		return latency;
+		return latency - (Math.random() * (latency / 2) + 1);
 	}
 
 	public static double getNetworkUsageAverage() {
 		return usagePercentage;
 	}
 
+	public static int getTime() {
+		return time;
+	}
+
+	public static int getSentMessages() {
+		return sentMessages;
+	}
+
+	public static double getAverageMessageSize() {
+		return averageMessageSize;
+	}
+
 	public static void reset() {
 		messagesSent.clear();
+		sentMessages = 0;
 		transferedBytes = 0;
 		transferedPackets = 0;
 		byterate = 0.0;
 		latency = 0.0;
 		usagePercentage = 0.0;
+		averageMessageSize = 0.0;
 		time = 0;
 	}
 
