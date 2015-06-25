@@ -3,7 +3,7 @@ package ar.edu.itba.ss.simulator.model;
 import java.util.UUID;
 
 public class Data {
-	
+
 	private UUID id;
 	private int size;
 	private Message message;
@@ -19,7 +19,7 @@ public class Data {
 	public int getSize() {
 		return size;
 	}
-	
+
 	public UUID getId() {
 		return id;
 	}
@@ -31,7 +31,7 @@ public class Data {
 	public boolean isTransferred() {
 		return transferred;
 	}
-	
+
 	public void transferred() {
 		this.transferred = true;
 	}
