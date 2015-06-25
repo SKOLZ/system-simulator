@@ -9,20 +9,29 @@ import com.google.common.collect.Maps;
 
 public class Statistics {
 
-	private static final Map<Data, Long> dataSent = Maps.newHashMap();
+	private static int time = 0;
+
 	private static final Map<Message, Long> messagesSent = Maps.newHashMap();
 
 	private static int transferedBytes = 0;
 	private static int transferedPackets = 0;
 	private static double byterate = 0.0;
 	private static double latency = 0.0;
+	private static double usagePercentage = 0.0;
+
+	public static void tick() {
+		time++;
+	}
+
+	public static void logUsage(double percentage) {
+		if (percentage > 100) {
+			percentage = 100;
+		}
+		usagePercentage = ((usagePercentage * time) + percentage) / (time + 1);
+	}
 
 	public static void logMessage(Message message, long time) {
 		messagesSent.put(message, time);
-	}
-
-	public static void logSent(Data data, long time) {
-		dataSent.put(data, time);
 	}
 
 	public static void logReceived(Data data, long time) {
@@ -41,12 +50,12 @@ public class Statistics {
 		transferedBytes += message.getSize();
 		transferedPackets++;
 
-		System.out.println("Received: " + message + "in " + elapsedTime
-				+ " t.u. --> at " + bytesPerTimeUnit + " bytes/t.u.");
-		
+		// System.out.println("Received: " + message + "in " + elapsedTime
+		// + " t.u. --> at " + bytesPerTimeUnit + " bytes/t.u.");
+
 		messagesSent.remove(message);
 	}
-	
+
 	public static int getUntransferredPackets() {
 		return messagesSent.size();
 	}
@@ -65,6 +74,20 @@ public class Statistics {
 
 	public static double getAverageLatency() {
 		return latency;
+	}
+
+	public static double getNetworkUsageAverage() {
+		return usagePercentage;
+	}
+
+	public static void reset() {
+		messagesSent.clear();
+		transferedBytes = 0;
+		transferedPackets = 0;
+		byterate = 0.0;
+		latency = 0.0;
+		usagePercentage = 0.0;
+		time = 0;
 	}
 
 }

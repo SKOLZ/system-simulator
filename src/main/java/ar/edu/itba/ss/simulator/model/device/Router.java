@@ -34,7 +34,7 @@ public class Router extends Device {
 
 	private boolean send(Data data) {
 		Channel channel = this.getChannel();
-		if (!channel.isAvailable(data.getSize()) || !channel.transfer(data)) {
+		if (!channel.isAvailable() || !channel.transfer(data)) {
 			return false;
 		}
 		return false;

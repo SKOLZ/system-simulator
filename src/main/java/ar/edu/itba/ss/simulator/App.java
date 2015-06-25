@@ -8,11 +8,21 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import ar.edu.itba.ss.simulator.model.NetworkFactory;
 
 public class App extends Application {
 
 	public static void main(String[] args) throws InterruptedException {
-		Application.launch(args);
+		int simulationDelay = 0;
+		int maxTime = 1000;
+		double lambda = 0.05;
+
+		NetworkFactory.getCircuitNetwork(simulationDelay, maxTime, lambda).run();
+		System.out.println("====================================");
+		Statistics.reset();
+		System.out.println("====================================");
+		NetworkFactory.getPacketNetwork(simulationDelay, maxTime, lambda).run();
+		// Application.launch(args);
 	}
 
 	@Override

@@ -12,7 +12,7 @@ import com.google.common.collect.Lists;
 
 public class User extends Device {
 
-	private static final Integer MAX_MESSAGE_SIZE = 100;
+	private static final Integer MAX_MESSAGE_SIZE = 10000;
 
 	private Queue<Data> receivedData;
 	private ExponentialDistribution eventDistribution;
@@ -46,7 +46,6 @@ public class User extends Device {
 						.getChannelSize());
 				Statistics.logMessage(message, this.getTime());
 				for (Data data : message.getDatagrams()) {
-					Statistics.logSent(data, this.getTime());
 					this.getChannel().transfer(data);
 				}
 				waitingTime = this.eventDistribution
