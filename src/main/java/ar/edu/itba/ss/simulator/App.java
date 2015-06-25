@@ -68,13 +68,25 @@ public class App extends Application {
 		}
 
 		if (cmd.hasOption("p")) {
-			timedObjects = NetworkFactory.getPacketNetwork(bandwidth, transferRate, lambda, users,
-					routers).getTimedObjects();
+			timedObjects = NetworkFactory.getPacketNetwork(bandwidth,
+					transferRate, lambda, users, routers).getTimedObjects();
 		} else {
-			timedObjects = NetworkFactory.getCircuitNetwork(bandwidth, transferRate, lambda, users,
-					routers).getTimedObjects();
+			timedObjects = NetworkFactory.getCircuitNetwork(bandwidth,
+					transferRate, lambda, users, routers).getTimedObjects();
 		}
-		
+
+		new Thread(() -> {
+			for (int i = 0; i < Integer.MAX_VALUE; i++) {
+				try {
+					Thread.sleep(1000 / 60);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				timedObjects.forEach(to -> to.tick());
+				Statistics.tick();
+			}
+		}).start();
+
 		Application.launch(args);
 	}
 
@@ -99,7 +111,7 @@ public class App extends Application {
 		stage.setScene(new Scene(group));
 		stage.show();
 
-		tick();
+		// tick();
 
 		this.animations.forEach(a -> a.play());
 	}
@@ -107,17 +119,12 @@ public class App extends Application {
 	private void tick() {
 		Timeline animation = new Timeline();
 		animation.getKeyFrames().add(
-				new KeyFrame(Duration.millis(1000 / 10),
+				new KeyFrame(Duration.millis(1000 / 60),
 						new EventHandler<ActionEvent>() {
 							@Override
 							public void handle(ActionEvent actionEvent) {
 								timedObjects.forEach(to -> to.tick());
 								Statistics.tick();
-								try {
-									Thread.sleep(10);
-								} catch (InterruptedException e) {
-									e.printStackTrace();
-								}
 							}
 						}));
 		animation.setCycleCount(Animation.INDEFINITE);
@@ -142,7 +149,7 @@ public class App extends Application {
 
 		Timeline animation = new Timeline();
 		animation.getKeyFrames().add(
-				new KeyFrame(Duration.millis(1000 / 10),
+				new KeyFrame(Duration.millis(1000 / 60),
 						new EventHandler<ActionEvent>() {
 							@Override
 							public void handle(ActionEvent actionEvent) {
@@ -181,7 +188,7 @@ public class App extends Application {
 
 		Timeline animation = new Timeline();
 		animation.getKeyFrames().add(
-				new KeyFrame(Duration.millis(1000 / 10),
+				new KeyFrame(Duration.millis(1000 / 60),
 						new EventHandler<ActionEvent>() {
 							@Override
 							public void handle(ActionEvent actionEvent) {
@@ -218,7 +225,7 @@ public class App extends Application {
 
 		Timeline animation = new Timeline();
 		animation.getKeyFrames().add(
-				new KeyFrame(Duration.millis(1000 / 10),
+				new KeyFrame(Duration.millis(1000 / 60),
 						new EventHandler<ActionEvent>() {
 							@Override
 							public void handle(ActionEvent actionEvent) {
@@ -257,7 +264,7 @@ public class App extends Application {
 
 		Timeline animation = new Timeline();
 		animation.getKeyFrames().add(
-				new KeyFrame(Duration.millis(1000 / 10),
+				new KeyFrame(Duration.millis(1000 / 60),
 						new EventHandler<ActionEvent>() {
 							@Override
 							public void handle(ActionEvent actionEvent) {
