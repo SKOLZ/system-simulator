@@ -1,0 +1,8 @@
+.network, .clients {
+	-fx-display: inline-block;
+	-fx-vertical-align: middle;
+}
+
+.clients {
+	-fx-padding-bottom: 100;
+}

@@ -39,20 +39,20 @@ public class App extends Application {
 		ImageView router1iv = new ImageView();
 		router1iv.setImage(new Image("router.jpg", 500, 500, false, false));
 		router1iv.setPreserveRatio(true);
-		router1iv.setFitHeight(150);
-		router1iv.setFitWidth(150);
+		router1iv.setFitHeight(50);
+		router1iv.setFitWidth(50);
 
 		ImageView router2iv = new ImageView();
 		router2iv.setImage(new Image("router.jpg", 500, 500, false, false));
 		router2iv.setPreserveRatio(true);
-		router2iv.setFitHeight(150);
-		router2iv.setFitWidth(150);
+		router2iv.setFitHeight(50);
+		router2iv.setFitWidth(50);
 
 		ImageView router3iv = new ImageView();
 		router3iv.setImage(new Image("router.jpg", 500, 500, false, false));
 		router3iv.setPreserveRatio(true);
-		router3iv.setFitHeight(150);
-		router3iv.setFitWidth(150);
+		router3iv.setFitHeight(50);
+		router3iv.setFitWidth(50);
 		
 		ImageView receiveriv = new ImageView();
 		receiveriv.setImage(new Image("user.jpg", 500, 500, false, false));
@@ -61,16 +61,21 @@ public class App extends Application {
 		receiveriv.setFitWidth(150);
 
 		VBox sender = new VBox(sender1iv, sender2iv, sender3iv);
+		sender.getStyleClass().add("clients");
 		StackPane router1 = new StackPane(router1iv);
 		StackPane router2 = new StackPane(router2iv);
 		StackPane router3 = new StackPane(router3iv);
 		StackPane receiver = new StackPane(receiveriv);
-
+		
+		HBox network = new HBox();
+		network.getStyleClass().add("network");
+		network.getChildren().addAll(router1, router2, router3, receiver);
+		
 		HBox root = new HBox();
-		root.getChildren().addAll(sender, router1, router2, router3, receiver);
+		root.getChildren().addAll(sender, network);
 
 		Scene scene = new Scene(root, 1024, 768);
-
+		scene.getStylesheets().add("stylesheet.css");
 		stage.setScene(scene);
 		stage.show();
 	}
