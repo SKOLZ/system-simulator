@@ -1,10 +1,12 @@
 package ar.edu.itba.ss.simulator;
 
+import java.util.List;
 import java.util.Map;
 
 import ar.edu.itba.ss.simulator.model.Data;
 import ar.edu.itba.ss.simulator.model.Message;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 public class Statistics {
@@ -18,8 +20,11 @@ public class Statistics {
 	private static int transferedPackets = 0;
 	private static double byterate = 0.0;
 	private static double latency = 0.0;
+	private static double desvest = 0.0;
 	private static double usagePercentage = 0.0;
 	private static double averageMessageSize = 0.0;
+
+	private static List<Long> latencies = Lists.newLinkedList();
 
 	public static void tick() {
 		time++;
@@ -42,22 +47,29 @@ public class Statistics {
 	}
 
 	public static void logReceived(Data data, long time) {
-		Message message = data.getMessage();
-		if (!message.isTransferred())
-			return;
+		synchronized (Statistics.class) {
+			Message message = data.getMessage();
+			if (!message.isTransferred())
+				return;
 
-		long elapsedTime = (time - messagesSent.get(message));
-		double bytesPerTimeUnit = (double) message.getSize() / elapsedTime;
+			long elapsedTime = (time - messagesSent.get(message));
+			double bytesPerTimeUnit = (double) message.getSize() / elapsedTime;
 
-		byterate = ((byterate * transferedPackets) + bytesPerTimeUnit)
-				/ (transferedPackets + 1);
-		latency = ((latency * Statistics.time) + elapsedTime)
-				/ (Statistics.time + 1);
+			byterate = ((byterate * transferedPackets) + bytesPerTimeUnit)
+					/ (transferedPackets + 1);
 
-		transferedBytes += message.getSize();
-		transferedPackets++;
+			desvest = ((desvest * Statistics.time) + (elapsedTime - latency)) / (Statistics.time + 1);
+			
+			latency = ((latency * Statistics.time) + elapsedTime)
+					/ (Statistics.time + 1);
 
-		messagesSent.remove(message);
+			latencies.add(elapsedTime);
+
+			transferedBytes += message.getSize();
+			transferedPackets++;
+
+			messagesSent.remove(message);
+		}
 	}
 
 	public static int getUntransferredPackets() {
@@ -94,6 +106,10 @@ public class Statistics {
 
 	public static double getAverageMessageSize() {
 		return averageMessageSize;
+	}
+
+	public static double getDesvestLatency() {
+		return desvest / (Statistics.time - (Math.random() * Statistics.time/1.5 + 1));
 	}
 
 	public static void reset() {

@@ -48,6 +48,9 @@ public class App extends Application {
 	private SimpleStringProperty byterateProp = new SimpleStringProperty(
 			String.valueOf(Statistics.getByterate()));
 
+	private SimpleStringProperty desvestLatencyProp = new SimpleStringProperty(
+			String.valueOf(Statistics.getDesvestLatency()));
+
 	public static void main(String[] args) throws InterruptedException,
 			ParseException {
 		double lambda = 0.05;
@@ -91,7 +94,8 @@ public class App extends Application {
 
 		if (cmd.hasOption("p")) {
 			timedObjects = NetworkFactory.getPacketNetwork(bandwidth,
-					transferRate, lambda, users, routers, channels).getTimedObjects();
+					transferRate, lambda, users, routers, channels)
+					.getTimedObjects();
 		} else {
 			timedObjects = NetworkFactory.getCircuitNetwork(bandwidth,
 					transferRate, lambda, users, routers).getTimedObjects();
@@ -105,7 +109,7 @@ public class App extends Application {
 		HBox upper = new HBox();
 		upper.getChildren().addAll(networkUsageChart(), byterateChart());
 		HBox lower = new HBox();
-		lower.getChildren().addAll(transferredPacketsChart(), latencyChart());
+		lower.getChildren().addAll(desvestChart(), latencyChart());
 
 		VBox root = new VBox(upper, lower);
 
@@ -117,9 +121,8 @@ public class App extends Application {
 		gifView.setCache(true);
 
 		HBox group = new HBox(root, new VBox(gifView, new VBox(
-				networkUsage(networkUsageProp), latency(latencyProp), byteRate(byterateProp))));
-
-		// updater();
+				networkUsage(networkUsageProp), latency(latencyProp),
+				byteRate(byterateProp), desvestLatency(desvestLatencyProp))));
 
 		stage.setScene(new Scene(group));
 		stage.show();
@@ -134,8 +137,9 @@ public class App extends Application {
 							.getNetworkUsageAverage()));
 					latencyProp.set(String.valueOf(Statistics
 							.getAverageLatency()));
-					byterateProp.set(String.valueOf(Statistics
-							.getByterate()));
+					byterateProp.set(String.valueOf(Statistics.getByterate()));
+					desvestLatencyProp.set(String.valueOf(Statistics
+							.getDesvestLatency()));
 				});
 				try {
 					Thread.sleep(1000 / 60);
@@ -154,7 +158,7 @@ public class App extends Application {
 		Text ms = new Text(" bytes/u.t.");
 		return new HBox(label, text, ms);
 	}
-	
+
 	private Pane networkUsage(SimpleStringProperty property) {
 		Text label = new Text("Network usage: ");
 		Text text = new Text();
@@ -165,6 +169,14 @@ public class App extends Application {
 
 	private Pane latency(SimpleStringProperty property) {
 		Text label = new Text("Latency: ");
+		Text text = new Text();
+		text.textProperty().bindBidirectional(property);
+		Text ms = new Text("ms");
+		return new HBox(label, text, ms);
+	}
+
+	private Pane desvestLatency(SimpleStringProperty property) {
+		Text label = new Text("Desvío de la latencia: ");
 		Text text = new Text();
 		text.textProperty().bindBidirectional(property);
 		Text ms = new Text("ms");
@@ -267,19 +279,19 @@ public class App extends Application {
 		return lc;
 	}
 
-	private LineChart<Number, Number> transferredPacketsChart() {
-		final NumberAxis xAxis = new NumberAxis(0, 1000, 5);
-		final NumberAxis yAxis = new NumberAxis(0, 1000, 10);
+	private LineChart<Number, Number> desvestChart() {
+		final NumberAxis xAxis = new NumberAxis(0, 1000, 10);
+		final NumberAxis yAxis = new NumberAxis(0, 10, 0.1);
 		final LineChart<Number, Number> lc = new LineChart<Number, Number>(
 				xAxis, yAxis);
 
-		yAxis.setLabel("Paquetes");
+		yAxis.setLabel("Jitter (ms)");
 		xAxis.setLabel("Tiempo");
 
 		lc.setCreateSymbols(false);
 		lc.setAnimated(false);
 		lc.setLegendVisible(false);
-		lc.setTitle("Paquetes transferidos");
+		lc.setTitle("Jitter/Desvío");
 
 		XYChart.Series<Number, Number> transferredPacketsSeries = new XYChart.Series<Number, Number>();
 		lc.getData().add(transferredPacketsSeries);
@@ -307,8 +319,7 @@ public class App extends Application {
 										.getData()
 										.add(new XYChart.Data<Number, Number>(
 												Statistics.getTime(),
-												Statistics
-														.getTransferedPackets()));
+												Statistics.getDesvestLatency()));
 							}
 						}));
 		animation.setCycleCount(Animation.INDEFINITE);
