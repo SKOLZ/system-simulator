@@ -55,6 +55,7 @@ public class App extends Application {
 		int transferRate = 200;
 		int users = 3;
 		int routers = 3;
+		int channels = 4;
 
 		Options options = new Options();
 		options.addOption("p", false, "packet switching");
@@ -64,6 +65,7 @@ public class App extends Application {
 		options.addOption("tr", true, "routers transfer rate");
 		options.addOption("u", true, "users");
 		options.addOption("t", true, "time");
+		options.addOption("k", true, "channels");
 
 		CommandLineParser parser = new DefaultParser();
 		CommandLine cmd = parser.parse(options, args);
@@ -83,10 +85,13 @@ public class App extends Application {
 		if (cmd.hasOption("t")) {
 			maxTime.set(Integer.valueOf(cmd.getOptionValue("t")));
 		}
+		if (cmd.hasOption("k")) {
+			channels = Integer.valueOf(cmd.getOptionValue("k"));
+		}
 
 		if (cmd.hasOption("p")) {
 			timedObjects = NetworkFactory.getPacketNetwork(bandwidth,
-					transferRate, lambda, users, routers).getTimedObjects();
+					transferRate, lambda, users, routers, channels).getTimedObjects();
 		} else {
 			timedObjects = NetworkFactory.getCircuitNetwork(bandwidth,
 					transferRate, lambda, users, routers).getTimedObjects();
