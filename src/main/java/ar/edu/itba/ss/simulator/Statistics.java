@@ -51,8 +51,8 @@ public class Statistics {
 
 		byterate = ((byterate * transferedPackets) + bytesPerTimeUnit)
 				/ (transferedPackets + 1);
-		latency = ((latency * transferedPackets) + elapsedTime)
-				/ (transferedPackets + 1);
+		latency = ((latency * Statistics.time) + elapsedTime)
+				/ (Statistics.time + 1);
 
 		transferedBytes += message.getSize();
 		transferedPackets++;
@@ -77,7 +77,7 @@ public class Statistics {
 	}
 
 	public static double getAverageLatency() {
-		return latency - (Math.random() * (latency / 2) + 1);
+		return latency;
 	}
 
 	public static double getNetworkUsageAverage() {

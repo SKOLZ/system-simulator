@@ -1,11 +1,14 @@
 package ar.edu.itba.ss.simulator;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
@@ -15,7 +18,9 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -34,6 +39,14 @@ public class App extends Application {
 
 	private static List<TimedObject> timedObjects = Lists.newLinkedList();
 	private List<Animation> animations = Lists.newLinkedList();
+	private static AtomicInteger maxTime = new AtomicInteger(2000);
+
+	private SimpleStringProperty networkUsageProp = new SimpleStringProperty(
+			String.valueOf(Statistics.getNetworkUsageAverage()));
+	private SimpleStringProperty latencyProp = new SimpleStringProperty(
+			String.valueOf(Statistics.getAverageLatency()));
+	private SimpleStringProperty byterateProp = new SimpleStringProperty(
+			String.valueOf(Statistics.getByterate()));
 
 	public static void main(String[] args) throws InterruptedException,
 			ParseException {
@@ -50,6 +63,7 @@ public class App extends Application {
 		options.addOption("b", true, "routers bandwitdh");
 		options.addOption("tr", true, "routers transfer rate");
 		options.addOption("u", true, "users");
+		options.addOption("t", true, "time");
 
 		CommandLineParser parser = new DefaultParser();
 		CommandLine cmd = parser.parse(options, args);
@@ -66,6 +80,9 @@ public class App extends Application {
 		if (cmd.hasOption("u")) {
 			users = Integer.valueOf(cmd.getOptionValue("u"));
 		}
+		if (cmd.hasOption("t")) {
+			maxTime.set(Integer.valueOf(cmd.getOptionValue("t")));
+		}
 
 		if (cmd.hasOption("p")) {
 			timedObjects = NetworkFactory.getPacketNetwork(bandwidth,
@@ -74,18 +91,6 @@ public class App extends Application {
 			timedObjects = NetworkFactory.getCircuitNetwork(bandwidth,
 					transferRate, lambda, users, routers).getTimedObjects();
 		}
-
-		new Thread(() -> {
-			for (int i = 0; i < Integer.MAX_VALUE; i++) {
-				try {
-					Thread.sleep(1000 / 60);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				timedObjects.forEach(to -> to.tick());
-				Statistics.tick();
-			}
-		}).start();
 
 		Application.launch(args);
 	}
@@ -106,29 +111,59 @@ public class App extends Application {
 		gifView.setSmooth(true);
 		gifView.setCache(true);
 
-		HBox group = new HBox(root, gifView);
+		HBox group = new HBox(root, new VBox(gifView, new VBox(
+				networkUsage(networkUsageProp), latency(latencyProp), byteRate(byterateProp))));
+
+		// updater();
 
 		stage.setScene(new Scene(group));
 		stage.show();
-
-		// tick();
-
 		this.animations.forEach(a -> a.play());
+
+		new Thread(() -> {
+			for (int i = 0; i < maxTime.get(); i++) {
+				timedObjects.forEach(to -> to.tick());
+				Statistics.tick();
+				Platform.runLater(() -> {
+					networkUsageProp.set(String.valueOf(Statistics
+							.getNetworkUsageAverage()));
+					latencyProp.set(String.valueOf(Statistics
+							.getAverageLatency()));
+					byterateProp.set(String.valueOf(Statistics
+							.getByterate()));
+				});
+				try {
+					Thread.sleep(1000 / 60);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
+		}).start();
 	}
 
-	private void tick() {
-		Timeline animation = new Timeline();
-		animation.getKeyFrames().add(
-				new KeyFrame(Duration.millis(1000 / 60),
-						new EventHandler<ActionEvent>() {
-							@Override
-							public void handle(ActionEvent actionEvent) {
-								timedObjects.forEach(to -> to.tick());
-								Statistics.tick();
-							}
-						}));
-		animation.setCycleCount(Animation.INDEFINITE);
-		this.animations.add(animation);
+	private Pane byteRate(SimpleStringProperty property) {
+		Text label = new Text("Byterate: ");
+		Text text = new Text();
+		text.textProperty().bindBidirectional(property);
+		Text ms = new Text(" bytes/u.t.");
+		return new HBox(label, text, ms);
+	}
+	
+	private Pane networkUsage(SimpleStringProperty property) {
+		Text label = new Text("Network usage: ");
+		Text text = new Text();
+		text.textProperty().bindBidirectional(property);
+		Text ms = new Text(" %");
+		return new HBox(label, text, ms);
+	}
+
+	private Pane latency(SimpleStringProperty property) {
+		Text label = new Text("Latency: ");
+		Text text = new Text();
+		text.textProperty().bindBidirectional(property);
+		Text ms = new Text("ms");
+		return new HBox(label, text, ms);
 	}
 
 	private LineChart<Number, Number> networkUsageChart() {
@@ -138,6 +173,7 @@ public class App extends Application {
 				xAxis, yAxis);
 
 		yAxis.setLabel("Ancho de banda utilizado");
+		xAxis.setLabel("Tiempo");
 
 		lc.setCreateSymbols(false);
 		lc.setAnimated(false);
@@ -151,11 +187,20 @@ public class App extends Application {
 		animation.getKeyFrames().add(
 				new KeyFrame(Duration.millis(1000 / 60),
 						new EventHandler<ActionEvent>() {
+							private int previousTime = 750;
+
 							@Override
 							public void handle(ActionEvent actionEvent) {
-								if (Statistics.getTime() > 750) {
-									xAxis.setUpperBound(xAxis.getUpperBound() + 1);
-									xAxis.setLowerBound(xAxis.getLowerBound() + 1);
+								if (Statistics.getTime() > 750
+										&& Statistics.getTime() > previousTime) {
+									xAxis.setUpperBound(xAxis.getUpperBound()
+											+ Statistics.getTime()
+											- previousTime);
+									xAxis.setLowerBound(xAxis.getLowerBound()
+											+ Statistics.getTime()
+											- previousTime);
+									previousTime += Statistics.getTime()
+											- previousTime;
 								}
 								networkUsageSeries
 										.getData()
@@ -177,6 +222,7 @@ public class App extends Application {
 				xAxis, yAxis);
 
 		yAxis.setLabel("bytes / unidad de tiempo");
+		xAxis.setLabel("Tiempo");
 
 		lc.setCreateSymbols(false);
 		lc.setAnimated(false);
@@ -190,11 +236,20 @@ public class App extends Application {
 		animation.getKeyFrames().add(
 				new KeyFrame(Duration.millis(1000 / 60),
 						new EventHandler<ActionEvent>() {
+							private int previousTime = 750;
+
 							@Override
 							public void handle(ActionEvent actionEvent) {
-								if (Statistics.getTime() > 750) {
-									xAxis.setUpperBound(xAxis.getUpperBound() + 1);
-									xAxis.setLowerBound(xAxis.getLowerBound() + 1);
+								if (Statistics.getTime() > 750
+										&& Statistics.getTime() > previousTime) {
+									xAxis.setUpperBound(xAxis.getUpperBound()
+											+ Statistics.getTime()
+											- previousTime);
+									xAxis.setLowerBound(xAxis.getLowerBound()
+											+ Statistics.getTime()
+											- previousTime);
+									previousTime += Statistics.getTime()
+											- previousTime;
 								}
 								byterateSeries.getData().add(
 										new XYChart.Data<Number, Number>(
@@ -214,6 +269,7 @@ public class App extends Application {
 				xAxis, yAxis);
 
 		yAxis.setLabel("Paquetes");
+		xAxis.setLabel("Tiempo");
 
 		lc.setCreateSymbols(false);
 		lc.setAnimated(false);
@@ -227,11 +283,20 @@ public class App extends Application {
 		animation.getKeyFrames().add(
 				new KeyFrame(Duration.millis(1000 / 60),
 						new EventHandler<ActionEvent>() {
+							private int previousTime = 750;
+
 							@Override
 							public void handle(ActionEvent actionEvent) {
-								if (Statistics.getTime() > 750) {
-									xAxis.setUpperBound(xAxis.getUpperBound() + 1);
-									xAxis.setLowerBound(xAxis.getLowerBound() + 1);
+								if (Statistics.getTime() > 750
+										&& Statistics.getTime() > previousTime) {
+									xAxis.setUpperBound(xAxis.getUpperBound()
+											+ Statistics.getTime()
+											- previousTime);
+									xAxis.setLowerBound(xAxis.getLowerBound()
+											+ Statistics.getTime()
+											- previousTime);
+									previousTime += Statistics.getTime()
+											- previousTime;
 								}
 								transferredPacketsSeries
 										.getData()
@@ -248,16 +313,17 @@ public class App extends Application {
 
 	private LineChart<Number, Number> latencyChart() {
 		final NumberAxis xAxis = new NumberAxis(0, 1000, 5);
-		final NumberAxis yAxis = new NumberAxis(0, 10000, 100);
+		final NumberAxis yAxis = new NumberAxis(0, 1000, 10);
 		final LineChart<Number, Number> lc = new LineChart<Number, Number>(
 				xAxis, yAxis);
 
 		yAxis.setLabel("Latencia (ms)");
+		xAxis.setLabel("Tiempo");
 
 		lc.setCreateSymbols(false);
 		lc.setAnimated(false);
 		lc.setLegendVisible(false);
-		lc.setTitle("Latencia promedio de mensajes");
+		lc.setTitle("Tiempo de transferencia (ms)");
 
 		XYChart.Series<Number, Number> averageLatencySeries = new XYChart.Series<Number, Number>();
 		lc.getData().add(averageLatencySeries);
@@ -266,11 +332,20 @@ public class App extends Application {
 		animation.getKeyFrames().add(
 				new KeyFrame(Duration.millis(1000 / 60),
 						new EventHandler<ActionEvent>() {
+							private int previousTime = 750;
+
 							@Override
 							public void handle(ActionEvent actionEvent) {
-								if (Statistics.getTime() > 750) {
-									xAxis.setUpperBound(xAxis.getUpperBound() + 1);
-									xAxis.setLowerBound(xAxis.getLowerBound() + 1);
+								if (Statistics.getTime() > 750
+										&& Statistics.getTime() > previousTime) {
+									xAxis.setUpperBound(xAxis.getUpperBound()
+											+ Statistics.getTime()
+											- previousTime);
+									xAxis.setLowerBound(xAxis.getLowerBound()
+											+ Statistics.getTime()
+											- previousTime);
+									previousTime += Statistics.getTime()
+											- previousTime;
 								}
 								averageLatencySeries
 										.getData()
